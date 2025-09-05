@@ -1,0 +1,4 @@
+参考
+*.egg-info
+__pycache__
+work

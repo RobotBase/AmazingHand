@@ -19,18 +19,23 @@
   - [初始化](#初始化)
   - [核心方法](#核心方法)
   - [预设手势](#预设手势)
+- [传感器功能使用示例](#传感器功能使用示例--新功能)
 - [运行示例](#运行示例)
+- [硬件要求](#硬件要求)
 - [许可证](#许可证)
 
 ---
 
 ### **功能特性**
 
-- **轻松连接**: 仅需一行代码即可初始化和连接机械手。
-- **独立控制**: 支持对每个手指（拇指、食指、中指、无名指）的独立、精确控制。
-- **预设手势**: 内置多种常用手势（如张开、握拳、胜利、OK等），方便直接调用。
-- **支持左右手**: 可通过参数轻松切换左手或右手模式。
-- **自定义校准**: 支持传入自定义校准数据，以适应不同硬件的差异。
+- **轻松连接**: 仅需一行代码即可初始化和连接机械手
+- **独立控制**: 支持对每个手指（拇指、食指、中指、无名指）的独立、精确控制
+- **双向通信**: ⭐ **新功能** 实时读取电机状态，包括位置、速度、负载、电压和温度
+- **预设手势**: 内置多种预设手势，如张手、握拳、指点、胜利手势等
+- **传感器监控**: ⭐ **新功能** 全面的传感器数据读取和实时监控功能
+- **错误处理**: 健壮的错误检测和异常处理机制
+- **支持左右手**: 可通过参数轻松切换左手或右手模式
+- **自定义校准**: 支持传入自定义校准数据，以适应不同硬件的差异
 
 ---
 
@@ -42,9 +47,13 @@
 │   ├── __init__.py
 │   └── amazingctrl.py        # AmazingHand 主控制类
 ├── examples/                 # 示例代码目录
-│   ├── gesture_sequence.py
-│   ├── single_finger_control.py
-│   └── custom_gesture.py
+│   ├── gesture_sequence.py      # 手势序列演示
+│   ├── single_finger_control.py # 单指控制演示
+│   ├── custom_gesture.py        # 自定义手势创建
+│   ├── data_reading_test.py     # 传感器数据读取测试
+│   ├── sensor_monitoring.py     # 实时传感器监控
+│   └── README.md               # 示例说明文档
+├── work/                     # 工作文档目录
 ├── LICENSE                   # MIT 许可证
 ├── README.md                 # 项目说明文档
 ├── requirements.txt          # 依赖库列表
@@ -83,7 +92,7 @@
 
 ### **快速上手**
 
-以下是一个简单的示例，展示了如何连接机械手并让它做一���胜利手势。
+以下是一个简单的示例，展示了如何连接机械手并让它做一个胜利手势。
 
 ```python
 import time
@@ -100,12 +109,12 @@ try:
 
     # 2. 启动连接并给电机供电
     hand.start()
-    time.sleep(1) # 等待机械手准备就绪
+    time.sleep(1)  # 等待机械手准备就绪
 
     # 3. 发送指令：做一个胜利手势
     print("正在做出胜利手势...")
     hand.victory()
-    time.sleep(2) # 保持手势 2 秒
+    time.sleep(2)  # 保持手势 2 秒
 
     # 4. 恢复为张开状态
     print("正在张开手掌...")
@@ -137,6 +146,8 @@ finally:
 
 #### **核心方法**
 
+**基础控制方法：**
+
 - `hand.start()`: 连接到机械手并启用所有电机的扭矩，使其准备好接收指令。
 - `hand.stop()`: 禁用所有电机的扭矩，释放机械手。在程序结束时调用此方法非常重要。
 - `hand.index(angle_1, angle_2, speed)`: 控制食指。
@@ -146,6 +157,15 @@ finally:
   - `angle_1` (float): 控制关节1（左右摆动）。
   - `angle_2` (float): 控制关节2（前后弯曲）。
   - `speed` (int): 设定电机的运动速度。
+
+**传感器数据读取方法：** ⭐ **新功能**
+
+- `hand.read_position(motor_id)`: 读取指定电机的当前位置（度）。
+- `hand.read_speed(motor_id)`: 读取指定电机的当前速度。
+- `hand.read_load(motor_id)`: 读取指定电机的当前负载。
+- `hand.read_voltage(motor_id)`: 读取指定电机的当前电压。
+- `hand.read_temperature(motor_id)`: 读取指定电机的当前温度。
+- `hand.get_all_motors_status()`: 获取所有8个电机的完整状态信息。
 
 #### **预设手势**
 
@@ -158,6 +178,37 @@ finally:
 
 ---
 
+### **传感器功能使用示例** ⭐ **新功能**
+
+以下示例展示了如何使用新的传感器读取功能：
+
+```python
+import amazingctrl
+
+hand = amazingctrl.AmazingHand(port="/dev/tty.usbmodemXXXX")
+hand.start()
+
+# 读取单个电机状态
+position = hand.read_position(1)  # 读取电机1的位置
+load = hand.read_load(1)          # 读取电机1的负载
+temperature = hand.read_temperature(1)  # 读取电机1的温度
+
+print(f"电机1 - 位置: {position}°, 负载: {load}, 温度: {temperature}°C")
+
+# 读取所有电机状态
+all_status = hand.get_all_motors_status()
+for status in all_status:
+    motor_id = status['id']
+    pos = status['position']
+    load = status['load']
+    temp = status['temperature']
+    print(f"电机{motor_id}: 位置={pos:.2f}°, 负载={load:.1f}, 温度={temp:.1f}°C")
+
+hand.stop()
+```
+
+---
+
 ### **运行示例**
 
 在运行任何示例之前，请确保你已经：
@@ -165,26 +216,59 @@ finally:
 1. 完成了[安装指南](#安装指南)中的步骤。
 2. **修改了示例文件中的 `PORT` 变量**，使其与你的设备串口号匹配。
 
-- **示例1: 手势序列**
+- **示例1: 手势序列**  
     运行一个预设的常见手势序列。
 
     ```bash
     python examples/gesture_sequence.py
     ```
 
-- **示例2: 单指控制**
+- **示例2: 单指控制**  
     演示如何独立控制食指的弯曲和摆动。
 
     ```bash
     python examples/single_finger_control.py
     ```
 
-- **示例3: 创建自定义手势**
-    展示如何通过组合多个手指的动作来创建一个新的手势（“竖起大拇指”）。
+- **示例3: 创建自定义手势**  
+    展示如何通过组合多个手指的动作来创建一个新的手势（"竖起大拇指"）。
 
     ```bash
     python examples/custom_gesture.py
     ```
+
+- **示例4: 传感器数据读取** ⭐ **新功能**  
+    全面测试双向通信功能，实时读取电机状态数据。
+
+    ```bash
+    python examples/data_reading_test.py
+    ```
+
+- **示例5: 实时传感器监控** ⭐ **新功能**  
+    实时监控所有电机的状态，包括位置、负载、温度等。
+
+    ```bash
+    python examples/sensor_monitoring.py
+    ```
+
+---
+
+### **硬件要求**
+
+- **AmazingHand 机械手**: 支持的机械手硬件设备
+- **USB 连接**: 用于与计算机通信的 USB 串口连接
+- **兼容伺服电机**: 总共 8 个电机（每个手指 2 个电机）
+- **操作系统支持**:
+  - Windows (COM 端口)
+  - macOS (USB modem 端口)
+  - Linux (tty 端口)
+
+### **重要提示**
+
+- 在使用前务必正确配置串口号
+- 运行程序时确保机械手已正确连接并供电
+- 程序结束时必须调用 `hand.stop()` 来安全释放电机
+- 新的传感器功能需要支持双向通信的 AmazingHand 固件版本
 
 ---
 

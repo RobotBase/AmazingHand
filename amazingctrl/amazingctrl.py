@@ -134,3 +134,104 @@ class AmazingHand:
             self.middle(90, -90, self.MAX_SPEED)
             self.ring(90, -90, self.MAX_SPEED)
             self.thumb(75, 5, self.MAX_SPEED)
+
+    # --- Data Reading Methods ---
+    
+    def read_position(self, motor_id):
+        """Reads the present position of a single motor in degrees."""
+        pos_rad = self.controller.read_present_position(motor_id)
+        
+        # Handle different return types from rustypot
+        if isinstance(pos_rad, (list, tuple)):
+            if len(pos_rad) > 0:
+                pos_rad = pos_rad[0]  # Take the first element if it's a list
+            else:
+                return 0.0  # Return 0 if empty list
+        
+        pos_deg = np.rad2deg(pos_rad)
+        
+        # Ensure we return a scalar value, not an array
+        if isinstance(pos_deg, np.ndarray):
+            return float(pos_deg.item())
+        return float(pos_deg)
+
+    def read_speed(self, motor_id):
+        """Reads the present speed of a single motor."""
+        speed = self.controller.read_present_speed(motor_id)
+        
+        # Handle different return types from rustypot
+        if isinstance(speed, (list, tuple)):
+            if len(speed) > 0:
+                speed = speed[0]  # Take the first element if it's a list
+            else:
+                return 0.0  # Return 0 if empty list
+        
+        if isinstance(speed, np.ndarray):
+            return float(speed.item())
+        return float(speed)
+
+    def read_load(self, motor_id):
+        """Reads the present load of a single motor."""
+        load = self.controller.read_present_load(motor_id)
+        
+        # Handle different return types from rustypot
+        if isinstance(load, (list, tuple)):
+            if len(load) > 0:
+                load = load[0]  # Take the first element if it's a list
+            else:
+                return 0.0  # Return 0 if empty list
+        
+        if isinstance(load, np.ndarray):
+            return float(load.item())
+        return float(load)
+
+    def read_voltage(self, motor_id):
+        """Reads the present voltage of a single motor."""
+        voltage = self.controller.read_present_voltage(motor_id)
+        
+        # Handle different return types from rustypot
+        if isinstance(voltage, (list, tuple)):
+            if len(voltage) > 0:
+                voltage = voltage[0]  # Take the first element if it's a list
+            else:
+                return 0.0  # Return 0 if empty list
+        
+        if isinstance(voltage, np.ndarray):
+            return float(voltage.item())
+        return float(voltage)
+
+    def read_temperature(self, motor_id):
+        """Reads the present temperature of a single motor."""
+        temp = self.controller.read_present_temperature(motor_id)
+        
+        # Handle different return types from rustypot
+        if isinstance(temp, (list, tuple)):
+            if len(temp) > 0:
+                temp = temp[0]  # Take the first element if it's a list
+            else:
+                return 0.0  # Return 0 if empty list
+        
+        if isinstance(temp, np.ndarray):
+            return float(temp.item())
+        return float(temp)
+
+    def get_all_motors_status(self):
+        """
+        Retrieves a complete status dictionary for all 8 motors.
+        """
+        status_list = []
+        for i in range(1, 9):
+            try:
+                status = {
+                    "id": i,
+                    "position": round(self.read_position(i), 2),
+                    "speed": self.read_speed(i),
+                    "load": self.read_load(i),
+                    "voltage": self.read_voltage(i),
+                    "temperature": self.read_temperature(i),
+                }
+                status_list.append(status)
+            except Exception as e:
+                print(f"Could not read status for motor {i}: {e}")
+                status_list.append({"id": i, "error": "read failed"})
+        return status_list
